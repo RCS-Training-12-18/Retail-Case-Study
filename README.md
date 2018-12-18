@@ -1,4 +1,4 @@
-# Retail-Case-Study
+﻿# Retail-Case-Study
 This is a training exercise for a training class that uses PySpark, AWS S3, Airflow and Snowflake
 
 ## Objective
@@ -6,7 +6,7 @@ In this project, we will be migrating the existing Retail project to use the New
 
 ## Retail Schema
 
-![Schema](Schema/Schema.png)
+![Schema](.schema/Schema.png)
 
 ### Foodmart DB for MySQL can be downloaded from the below link 
 
