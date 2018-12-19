@@ -1,0 +1,16 @@
+1001,Dell Laptop
+1002,Compaq Desktop
+1003,Dell Desktop
+1004,Apple Mac
+1005,Samsung Desktop
+1006,Toshiba Desktop
+2001,Microsoft Office
+2003,Encyclopedia Britanica
+2004,Kaspersky AV
+2006,Norton AV
+4001,Floppy Disk 5 inch
+4002,Zip Drive
+4004,10 Pack CD
+4005,20 Pack CD
+4006,4 GB Pen Drive
+4007,8 GB Pen Drive
