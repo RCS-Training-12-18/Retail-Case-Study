@@ -46,20 +46,6 @@ def prog_start():
     print "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
 
 
-def load_dfs():
-    # Set up sql context
-    sqlContext = SQLContext(sc)
-    p_df = sqlContext.read.format("jdbc").option("url", url).option("driver", "com.mysql.jdbc.Driver").option(
-        "dbtable", "promotion").option("user", u).option("password", pw).load()
-    s97_df = sqlContext.read.format("jdbc").option("url", url).option("driver", "com.mysql.jdbc.Driver").option(
-        "dbtable", "sales_fact_1997").option("user", u).option("password", pw).load()
-    s98_df = sqlContext.read.format("jdbc").option("url", url).option("driver", "com.mysql.jdbc.Driver").option(
-        "dbtable", "sales_fact_1998").option("user", u).option("password", pw).load()
-    s98d_df = sqlContext.read.format("jdbc").option("url", url).option("driver", "com.mysql.jdbc.Driver").option(
-        "dbtable", "sales_fact_dec_1998").option("user", u).option("password", pw).load()
-    return p_df, s97_df, s98_df, s98d_df
-
-
 def load_df(table_name, incremental,ts):
     sqlContext = SQLContext(sc)
     df = sqlContext.read.format("jdbc").option("url", url).option("driver", "com.mysql.jdbc.Driver").option(
