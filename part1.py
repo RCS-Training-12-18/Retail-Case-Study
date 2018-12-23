@@ -17,7 +17,7 @@ import time
 import sys
 import boto3
 import os
-
+import tempfile
 
 #Change these. Later will use a config file
 cred_file = "creds"
@@ -30,13 +30,6 @@ raw_out_loc = "file:///home/msr/case-study/raw/"
 bucket_name = "rcs-training-12-18"
 
 sc = SparkContext("local[2]", "Case-Study-Part-1")
-# Toggle for remove local files
-# If we can create a temp avro file in python to push to S3, this won't be needed
-# For now, default is false and don't use the s3 flag
-rem_loc = False
-
-if rem_loc:
-    import shutil
 
 
 # Just to show the start of the program in the middle of all the output
@@ -56,18 +49,22 @@ def load_df(table_name, incremental,ts):
         return df
 
 
+def write_avro2s3(df, dir_name, write_time, incremental):
+    client = boto3.client('s3')
+    path = os.path.join(tempfile.mkdtemp(), dir_name)
+    df.write.format("avro").save(path)
+    for f in os.listdir(path):
+        if f.startswith('part'):
+            out = path + "/" + f
+    client.put_object(Bucket=bucket_name, Key="raw/" + dir_name + "/" +
+                                              write_time + str(incremental) + ".arvo",
+                      Body=open(out, 'r'))
+
+
 def write_df(df, table_name, w_time, incremental):
     df.write.mode('append').format("avro").save(
         raw_out_loc + table_name + "/" + w_time + str(incremental))
 
-
-def avro_to_s3(dir_name, incremental, write_time):
-  client = boto3.client('s3')
-  for f in os.listdir(raw_out_loc[7:] + dir_name + "/" + write_time + str(incremental)):
-      if f.startswith('part'):
-          out = raw_out_loc[7:] + dir_name + "/" + write_time + str(incremental) + "/" + f
-  client.put_object(Bucket=bucket_name, Key="raw/" + dir_name + "/" + write_time + str(incremental) + ".arvo",
-                    Body=open(out, 'r'))
 
 def main(arg):
     # If no arguments in command line, exit the program with an error
@@ -93,24 +90,23 @@ def main(arg):
     s97_df = load_df("sales_fact_1997",arg[0],last_update_unix_ts)
     s98_df = load_df("sales_fact_1998",arg[0],last_update_unix_ts)
     s98d_df = load_df("sales_fact_dec_1998",arg[0],last_update_unix_ts)
-    # Saves the dataframes as avro files
     write_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    write_df(prom_df, "promotion", write_time, arg[0])
-    write_df(s97_df, "s97", write_time, arg[0])
-    write_df(s98_df, "s98", write_time, arg[0])
-    write_df(s98d_df, "s98d", write_time, arg[0])
-
     # Update the "last_update" file with the newest runtime.
     f = open(last_update, 'w+')
     f.write(str(new_update_time))
     f.close()
+    # Saves the dataframes as avro files in S3
     if len(arg) >= 2 and (arg[1] == "s3" or arg[1] == "S3"):
-        avro_to_s3("promotion", arg[0], write_time)
-        avro_to_s3("s97", arg[0], write_time)
-        avro_to_s3("s98", arg[0], write_time)
-        avro_to_s3("s98d", arg[0], write_time)
-    if rem_loc:
-        shutil.rmtree(raw_out_loc[7:])
+        write_avro2s3(prom_df, "promotion", write_time, arg[0])
+        write_avro2s3(s97_df, "s97", write_time, arg[0])
+        write_avro2s3(s98_df, "s98", write_time, arg[0])
+        write_avro2s3(s98d_df, "s98d", write_time, arg[0])
+    # Saves the dataframes as avro files locally
+    else:
+        write_df(prom_df, "promotion", write_time, arg[0])
+        write_df(s97_df, "s97", write_time, arg[0])
+        write_df(s98_df, "s98", write_time, arg[0])
+        write_df(s98d_df, "s98d", write_time, arg[0])
 
 
 # Runs the script
