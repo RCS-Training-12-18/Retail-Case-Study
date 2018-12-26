@@ -19,9 +19,7 @@ import os
 import tempfile
 from pyspark.sql.functions import col
 
-#File to save last update time, will move this to S3 later
-last_update = "last_update-p1"
-raw_out_loc = "file:///home/msr/case-study/raw/"
+
 bucket_name = "rcs-training-12-18"
 files = ["promotion", "store", "sales_fact_1997", "sales_fact_1998", "sales_fact_dec_1998", "time_by_day"]
 
