@@ -25,7 +25,7 @@ raw_out_loc = "file:///home/msr/case-study/raw/"
 bucket_name = "rcs-training-12-18"
 files = ["promotion", "store", "sales_fact_1997", "sales_fact_1998", "sales_fact_dec_1998", "time_by_day"]
 
-sc = SparkContext("local[2]", "Case-Study-Part-1")
+sc = SparkContext("local[2]", "Case-Study-Part-2")
 sqlContext = SQLContext(sc)
 spark = SparkSession.builder.appName("Case-Study-Part-2").getOrCreate()
 
