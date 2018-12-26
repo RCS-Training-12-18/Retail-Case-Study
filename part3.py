@@ -60,25 +60,50 @@ def read_parquet_from_s3():
 
 # Writes the dataframe to S3 using boto3
 # Saves the data as a csv
-def write_csv2s3(dfs, table_order):
+def write_csv2s3(df):
     section_header("Writing CSV to S3")
     client = boto3.client('s3')
     write_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    for i in range(len(dfs)):
-        df = dfs[i]
-        dir_name = table_order[i]
-        path = os.path.join(tempfile.mkdtemp(), dir_name)
-        df.write.format("csv").save(path)
-        for f in os.listdir(path):
-            if f.startswith('part'):
-                out = path + "/" + f
-        client.put_object(Bucket=bucket_name, Key="staging/" + dir_name + "/" + write_time + ".csv",
-                          Body=open(out, 'r'))
+    dir_name = "sales"
+    path = os.path.join(tempfile.mkdtemp(), dir_name)
+    df.write.format("csv").save(path)
+    parts = 0
+    for f in os.listdir(path):
+        if f.startswith('part'):
+            out = path + "/" + f
+            client.put_object(Bucket=bucket_name, Key="staging/" + dir_name + "/" + write_time +
+                                                      "-%05d.csv" % (parts,), Body=open(out, 'r'))
+            parts += 1
+
+
+def join_ini_dataframes(dfs, table_order):
+    # TODO Join the sales, day_by_time and store
+    return df
+
+
+def split_into_weekend_weekday(df):
+    # TODO make 2 dataframes, one for weekend and one for weekday
+    return [wkday, wkend]
+
+
+def aggregate_sales(dfs):
+    # TODO aggregate sales for the dataframe
+    return new_dfs
+
+
+def join_weekend_weekday(dfs):
+    # TODO join the weekday and weekend aggregations so each sale only has 1 row that shows both
+    return df
+
 
 
 def main(arg):
     dfs, table_order = read_avro_from_s3()
-    write_csv2s3(dfs, table_order)
+    df = join_ini_dataframes(dfs, table_order)
+    dfs = split_into_weekend_weekday(df)
+    dfs = aggregate_sales(dfs)
+    df = join_weekend_weekday(dfs)
+    write_csv2s3(df)
 
 
 # Runs the script
