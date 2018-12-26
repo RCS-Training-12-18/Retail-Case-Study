@@ -21,8 +21,6 @@ from pyspark.sql.functions import col
 
 
 bucket_name = "rcs-training-12-18"
-files = ["promotion", "store", "sales_fact_1997", "sales_fact_1998", "sales_fact_dec_1998", "time_by_day"]
-
 sc = SparkContext("local[2]", "Case-Study-Part-2")
 sqlContext = SQLContext(sc)
 spark = SparkSession.builder.appName("Case-Study-Part-2").getOrCreate()
@@ -46,7 +44,7 @@ def read_avro_from_s3():
     for obj in bucket.objects.all():
         key = obj.key
         key_parts = key.split("/")
-        if key_parts[1] in files and key_parts[0] == "raw":
+        if key_parts[0] == "raw":
             f = tempfile.NamedTemporaryFile(delete=False)
             f.write(obj.get()['Body'].read())
             f.close()
