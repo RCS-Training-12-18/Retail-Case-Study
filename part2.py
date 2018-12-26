@@ -77,12 +77,14 @@ def write_parquet2s3(dfs, table_order):
         df = dfs[i]
         dir_name = table_order[i]
         path = os.path.join(tempfile.mkdtemp(), dir_name)
-        df.write.format("parquet").save(path)
+        df.repartition(1).write.format("parquet").save(path)
+        parts = 0
         for f in os.listdir(path):
             if f.startswith('part'):
                 out = path + "/" + f
-        client.put_object(Bucket=bucket_name, Key="cleansed/" + dir_name + "/" + write_time + ".parquet",
-                          Body=open(out, 'r'))
+                client.put_object(Bucket=bucket_name, Key="cleansed/" + dir_name + "/" + write_time +
+                                                          "-%05d.parquet" % (parts,), Body=open(out, 'r'))
+                parts += 1
 
 
 # Joins the sales dataframes and updates the dfs array

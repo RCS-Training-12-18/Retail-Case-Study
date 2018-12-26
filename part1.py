@@ -80,12 +80,14 @@ def write_avro2s3(dfs, table_order, incremental):
         df = dfs[i]
         dir_name = table_order[i]
         path = os.path.join(tempfile.mkdtemp(), dir_name)
-        df.write.format("avro").save(path)
+        df.repartition(1).write.format("avro").save(path)
+        parts = 0;
         for f in os.listdir(path):
             if f.startswith('part'):
                 out = path + "/" + f
-        client.put_object(Bucket=bucket_name, Key="raw/" + dir_name + "/" + write_time + str(incremental) + ".arvo",
-                          Body=open(out, 'r'))
+                client.put_object(Bucket=bucket_name, Key="raw/" + dir_name + "/" + write_time + str(incremental) +
+                                                          "-%05d.arvo" % (parts,), Body=open(out, 'r'))
+                parts += 1
 
 
 def main(arg):
