@@ -1,12 +1,8 @@
 # Run script with full load:
 # spark-submit --packages mysql:mysql-connector-java:5.1.39,org.apache.spark:spark-avro_2.11:2.4.0 part1.py F
-# To run the script with S3 pushing run
-# spark-submit --packages mysql:mysql-connector-java:5.1.39,org.apache.spark:spark-avro_2.11:2.4.0 part1.py F s3
 
 # Run script with incremental load:
 # spark-submit --packages mysql:mysql-connector-java:5.1.39,org.apache.spark:spark-avro_2.11:2.4.0 part1.py I
-# To run the script with S3 pushing run
-# spark-submit --packages mysql:mysql-connector-java:5.1.39,org.apache.spark:spark-avro_2.11:2.4.0 part1.py I s3
 
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
@@ -18,11 +14,7 @@ import boto3
 import os
 import tempfile
 
-#Change these. Later will use a config file
-tables = "tables"
-u = "user"
-pw = "password"
-url = "jdbc:mysql://localhost/foodmart"
+creds = "mysql_creds"
 #File to save last update time, will move this to S3 later
 last_update = "last_update-p1"
 raw_out_loc = "file:///home/msr/case-study/raw/"
@@ -40,17 +32,36 @@ def section_header(h):
 
 # Load in table names into an array that is returned
 def table_names():
+    section_header("Get table names from S3")
+    s3 = boto3.resource('s3')
+    bucket = s3.Bucket(bucket_name)
     t_names = []
-    f = open(tables, 'r')
-    for l in f:
-        t_names.append(l.rstrip())
+    for obj in bucket.objects.all():
+        key = obj.key
+        key_parts = key.split("/")
+        if key_parts[0] == "config_files" and key_parts[1] == "tables":
+            f = tempfile.NamedTemporaryFile(delete=False)
+            f.write(obj.get()['Body'].read())
+            f.close()
+            file = open(f.name, 'r')
+            for l in file:
+                t_names.append(l.rstrip())
     return t_names
 
+
+def mysql_creds():
+    f = open(creds, 'r')
+    user = f.readline().rstrip()
+    password = f.readline().rstrip()
+    raw_out_loc = f.readline().rstrip()
+    f.close()
+    return user, password, raw_out_loc
 
 # Loads a dataframe and returns it
 # If the load is incremental, removes old data
 def load_df(table_name, incremental,ts):
     sqlContext = SQLContext(sc)
+    u, pw, url = mysql_creds()
     df = sqlContext.read.format("jdbc").option("url", url).option("driver", "com.mysql.jdbc.Driver").option(
           "dbtable", table_name).option("user", u).option("password", pw).load()
     if incremental == 'I':
@@ -61,20 +72,20 @@ def load_df(table_name, incremental,ts):
 
 # Writes the dataframe to S3 using boto3
 # Saves the data as an avro
-def write_avro2s3(df, dir_name, write_time, incremental):
+def write_avro2s3(dfs, table_order, incremental):
+    section_header("Writing Parquet to S3")
     client = boto3.client('s3')
-    path = os.path.join(tempfile.mkdtemp(), dir_name)
-    df.write.format("avro").save(path)
-    for f in os.listdir(path):
-        if f.startswith('part'):
-            out = path + "/" + f
-    client.put_object(Bucket=bucket_name, Key="raw/" + dir_name + "/" + write_time + str(incremental) + ".arvo",
-                      Body=open(out, 'r'))
-
-
-def write_df(df, table_name, w_time, incremental):
-    df.write.mode('append').format("avro").save(
-        raw_out_loc + table_name + "/" + w_time + str(incremental))
+    write_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    for i in range(len(dfs)):
+        df = dfs[i]
+        dir_name = table_order[i]
+        path = os.path.join(tempfile.mkdtemp(), dir_name)
+        df.write.format("avro").save(path)
+        for f in os.listdir(path):
+            if f.startswith('part'):
+                out = path + "/" + f
+        client.put_object(Bucket=bucket_name, Key="raw/" + dir_name + "/" + write_time + str(incremental) + ".arvo",
+                          Body=open(out, 'r'))
 
 
 def main(arg):
@@ -94,6 +105,7 @@ def main(arg):
         if arg[0] == 'I':
             print "Failed to load file:" + last_update
             exit(1)
+        # Set last update time to 0 if full load and file doesn't exist
         last_update_unix_ts = 0
     # Used when updating the "last_update" file
     new_update_time = int(time.time())
@@ -109,15 +121,7 @@ def main(arg):
     f.write(str(new_update_time))
     f.close()
     # Saves the dataframes as avro files in S3
-    if len(arg) >= 2 and (arg[1] == "s3" or arg[1] == "S3"):
-        section_header("Write to S3")
-        for i in range(len(t_names)):
-            write_avro2s3(dfs[i], t_names[i], write_time, arg[0])
-    # Saves the dataframes as avro files locally
-    else:
-        section_header("Write Locally")
-        for i in range(len(t_names)):
-            write_df(dfs[i], t_names[i], write_time, arg[0])
+    write_avro2s3(dfs, t_names, arg[0])
 
 
 # Runs the script
