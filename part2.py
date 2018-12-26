@@ -40,6 +40,7 @@ def section_header(h):
 # Writes the dataframe to S3 using boto3
 # Saves the data as an avro
 def read_avro_from_s3():
+    section_header("Get avro files from S3")
     s3 = boto3.resource('s3')
     dfs = []
     already_read = []
@@ -72,15 +73,20 @@ def remove_non_prom_sales(dfs, t_order):
 
 # Writes the dataframe to S3 using boto3
 # Saves the data as a parquet
-def write_parquet2s3(df, dir_name, write_time):
+def write_parquet2s3(dfs, table_order):
+    section_header("Writing Parquet to S3")
     client = boto3.client('s3')
-    path = os.path.join(tempfile.mkdtemp(), dir_name)
-    df.write.format("parquet").save(path)
-    for f in os.listdir(path):
-        if f.startswith('part'):
-            out = path + "/" + f
-    client.put_object(Bucket=bucket_name, Key="cleansed/" + dir_name + "/" + write_time + ".parquet",
-                      Body=open(out, 'r'))
+    write_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    for i in range(len(dfs)):
+        df = dfs[i]
+        dir_name = table_order[i]
+        path = os.path.join(tempfile.mkdtemp(), dir_name)
+        df.write.format("parquet").save(path)
+        for f in os.listdir(path):
+            if f.startswith('part'):
+                out = path + "/" + f
+        client.put_object(Bucket=bucket_name, Key="cleansed/" + dir_name + "/" + write_time + ".parquet",
+                          Body=open(out, 'r'))
 
 
 # Joins the sales dataframes and updates the dfs array
@@ -114,22 +120,18 @@ def sales_promotion_join(dfs, t_order):
         if i != sales and i != prom:
             new_dfs.append(dfs[i])
             table_order.append(t_order[i])
-    joined_table = dfs[sales].join(dfs[prom], "promotion_id")
+    joined_table = dfs[sales].join(dfs[prom], "promotion_id").drop(dfs[prom].last_update)
     new_dfs.append(joined_table)
     table_order.append("sales")
     return new_dfs, table_order
 
 
 def main(arg):
-    section_header("Get avro files from S3")
     dfs, table_order = read_avro_from_s3()
     dfs = remove_non_prom_sales(dfs, table_order)
     dfs, table_order = sales_union(dfs, table_order)
-    sales_promotion_join(dfs, table_order)
-    write_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    section_header("Writing Parquet to S3")
-    for i in range((len(dfs))):
-        write_parquet2s3(dfs[i], table_order[i], write_time)
+    dfs, table_order = sales_promotion_join(dfs, table_order)
+    write_parquet2s3(dfs, table_order)
 
 
 # Runs the script
