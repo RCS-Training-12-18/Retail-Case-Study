@@ -29,6 +29,7 @@ sc = SparkContext("local[2]", "Case-Study-Part-1")
 sqlContext = SQLContext(sc)
 spark = SparkSession.builder.appName("Case-Study-Part-2").getOrCreate()
 
+
 # Just to show the each section of the program in the middle of all the output
 def section_header(h):
     print "\n\n\n"
@@ -60,7 +61,7 @@ def read_avro_from_s3():
     return dfs, already_read
 
 
-# Removes all non-sale promotions from all sales tables by filtering by promotion ID
+# Removes all non-sale promotions from all sales dataframes by filtering by promotion ID
 def remove_non_prom_sales(dfs, t_order):
     section_header("Removing non-promotion sales")
     for i in range(len(dfs)):
@@ -82,8 +83,8 @@ def write_parquet2s3(df, dir_name, write_time):
                       Body=open(out, 'r'))
 
 
-# Joins the sales tables and updates the dfs array
-def join_sales(dfs, t_order):
+# Joins the sales dataframes and updates the dfs array
+def sales_union(dfs, t_order):
     section_header("Join Sales")
     new_dfs = []
     table_order = []
@@ -102,11 +103,29 @@ def join_sales(dfs, t_order):
     return new_dfs, table_order
 
 
+# Joins the sales and promotion data into one dataframe
+def sales_promotion_join(dfs, t_order):
+    section_header("Joining sales and promotion tables")
+    new_dfs = []
+    table_order = []
+    sales = t_order.index("sales")
+    prom = t_order.index("promotion")
+    for i in range(len(dfs)):
+        if i != sales and i != prom:
+            new_dfs.append(dfs[i])
+            table_order.append(t_order[i])
+    joined_table = dfs[sales].join(dfs[prom], "promotion_id")
+    new_dfs.append(joined_table)
+    table_order.append("sales")
+    return new_dfs, table_order
+
+
 def main(arg):
     section_header("Get avro files from S3")
     dfs, table_order = read_avro_from_s3()
     dfs = remove_non_prom_sales(dfs, table_order)
-    dfs, table_order = join_sales(dfs, table_order)
+    dfs, table_order = sales_union(dfs, table_order)
+    sales_promotion_join(dfs, table_order)
     write_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     section_header("Writing Parquet to S3")
     for i in range((len(dfs))):
