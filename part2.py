@@ -37,8 +37,8 @@ def section_header(h):
     print "\n\n\n"
 
 
-# Writes the dataframe to S3 using boto3
-# Saves the data as an avro
+# Reads the dataframes from S3 using boto3
+# Files are stored in avro format
 def read_avro_from_s3():
     section_header("Get avro files from S3")
     s3 = boto3.resource('s3')
