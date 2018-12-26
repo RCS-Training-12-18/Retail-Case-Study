@@ -17,6 +17,7 @@ import sys
 import boto3
 import os
 import tempfile
+from pyspark.sql.functions import col
 
 #File to save last update time, will move this to S3 later
 last_update = "last_update-p1"
@@ -45,7 +46,7 @@ def read_avro_from_s3():
     for obj in bucket.objects.all():
         key = obj.key
         key_parts = key.split("/")
-        if key_parts[1] in files:
+        if key_parts[1] in files and key_parts[0] == "raw":
             f = tempfile.NamedTemporaryFile(delete=False)
             f.write(obj.get()['Body'].read())
             f.close()
@@ -55,16 +56,61 @@ def read_avro_from_s3():
                 dfs[idx] = (dfs[idx]).union(data)
             else:
                 dfs.append(data)
-                already_read.append(key_parts[1])
+                already_read.append(str(key_parts[1]))
     return dfs, already_read
 
 
-def main(arg):
-    dfs, table_order = read_avro_from_s3()
-    section_header("Show")
-    print len(dfs)
-    section_header("Done")
+# Removes all non-sale promotions from all sales tables by filtering by promotion ID
+def remove_non_prom_sales(dfs, t_order):
+    section_header("Removing non-promotion sales")
+    for i in range(len(dfs)):
+        if t_order[i].startswith("sales"):
+            dfs[i] = dfs[i].filter(col('promotion_id') != 0)
+    return dfs
 
+
+# Writes the dataframe to S3 using boto3
+# Saves the data as a parquet
+def write_parquet2s3(df, dir_name, write_time):
+    client = boto3.client('s3')
+    path = os.path.join(tempfile.mkdtemp(), dir_name)
+    df.write.format("parquet").save(path)
+    for f in os.listdir(path):
+        if f.startswith('part'):
+            out = path + "/" + f
+    client.put_object(Bucket=bucket_name, Key="cleansed/" + dir_name + "/" + write_time + ".parquet",
+                      Body=open(out, 'r'))
+
+
+# Joins the sales tables and updates the dfs array
+def join_sales(dfs, t_order):
+    section_header("Join Sales")
+    new_dfs = []
+    table_order = []
+    sales_tables = []
+    for i in range(len(dfs)):
+        if t_order[i].startswith("sales"):
+            sales_tables.append(i)
+        else:
+            new_dfs.append(dfs[i])
+            table_order.append(t_order[i])
+    new_dfs.append(dfs[sales_tables[0]])
+    for i in range(len(sales_tables)):
+        if i != 0:
+            new_dfs[len(new_dfs)-1] = new_dfs[len(new_dfs)-1].union(dfs[sales_tables[i]])
+    table_order.append("sales")
+    return new_dfs, table_order
+
+
+def main(arg):
+    section_header("Get avro files from S3")
+    dfs, table_order = read_avro_from_s3()
+    dfs = remove_non_prom_sales(dfs, table_order)
+    dfs, table_order = join_sales(dfs, table_order)
+    write_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    section_header("Writing Parquet to S3")
+    for i in range((len(dfs))):
+        write_parquet2s3(dfs[i], table_order[i], write_time)
 
 
 # Runs the script
