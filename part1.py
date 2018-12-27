@@ -5,7 +5,6 @@
 # spark-submit --packages mysql:mysql-connector-java:5.1.39,org.apache.spark:spark-avro_2.11:2.4.0 part1.py I
 
 from pyspark import SparkContext
-from pyspark.streaming import StreamingContext
 from pyspark.sql import SparkSession, SQLContext
 import datetime
 import time
@@ -17,7 +16,6 @@ import tempfile
 creds = "mysql_creds"
 #File to save last update time, will move this to S3 later
 last_update = "last_update-p1"
-raw_out_loc = "file:///home/msr/case-study/raw/"
 bucket_name = "rcs-training-12-18"
 
 sc = SparkContext("local[2]", "Case-Study-Part-1")
@@ -53,9 +51,9 @@ def mysql_creds():
     f = open(creds, 'r')
     user = f.readline().rstrip()
     password = f.readline().rstrip()
-    raw_out_loc = f.readline().rstrip()
+    url = f.readline().rstrip()
     f.close()
-    return user, password, raw_out_loc
+    return user, password, url
 
 # Loads a dataframe and returns it
 # If the load is incremental, removes old data
