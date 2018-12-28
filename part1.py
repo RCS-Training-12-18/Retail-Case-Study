@@ -79,7 +79,7 @@ def write_avro2s3(dfs, table_order, incremental):
         dir_name = table_order[i]
         path = os.path.join(tempfile.mkdtemp(), dir_name)
         df.repartition(1).write.format("avro").save(path)
-        parts = 0;
+        parts = 0
         for f in os.listdir(path):
             if f.startswith('part'):
                 out = path + "/" + f
