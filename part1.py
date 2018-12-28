@@ -13,9 +13,9 @@ import boto3
 import os
 import tempfile
 
-creds = "mysql_creds"
+creds = "/home/msr/mysql_creds"
 #File to save last update time, will move this to S3 later
-last_update = "last_update-p1"
+last_update = "/home/msr/last_update-p1"
 bucket_name = "rcs-training-12-18"
 
 sc = SparkContext("local[2]", "Case-Study-Part-1")
@@ -83,8 +83,8 @@ def write_avro2s3(dfs, table_order, incremental):
         for f in os.listdir(path):
             if f.startswith('part'):
                 out = path + "/" + f
-                client.put_object(Bucket=bucket_name, Key="raw/" + dir_name + "/" + write_time + str(incremental) +
-                                                          "-%05d.arvo" % (parts,), Body=open(out, 'r'))
+                client.put_object(Bucket=bucket_name, Key="raw/" + dir_name + "/" + write_time + str(incremental) + "/"
+                                                          + "%05d.arvo" % (parts,), Body=open(out, 'r'))
                 parts += 1
 
 
