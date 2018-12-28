@@ -1,18 +1,9 @@
-# Run script with full load:
-# spark-submit --packages mysql:mysql-connector-java:5.1.39,org.apache.spark:spark-avro_2.11:2.4.0 part1.py F
-# To run the script with S3 pushing run
-# spark-submit --packages mysql:mysql-connector-java:5.1.39,org.apache.spark:spark-avro_2.11:2.4.0 part1.py F s3
-
-# Run script with incremental load:
-# spark-submit --packages mysql:mysql-connector-java:5.1.39,org.apache.spark:spark-avro_2.11:2.4.0 part1.py I
-# To run the script with S3 pushing run
-# spark-submit --packages mysql:mysql-connector-java:5.1.39,org.apache.spark:spark-avro_2.11:2.4.0 part1.py I s3
+# Run script with the command:
+# spark-submit --packages mysql:mysql-connector-java:5.1.39,org.apache.spark:spark-avro_2.11:2.4.0 part2.py
 
 from pyspark import SparkContext
-from pyspark.streaming import StreamingContext
 from pyspark.sql import SparkSession, SQLContext
 import datetime
-import time
 import sys
 import boto3
 import os
