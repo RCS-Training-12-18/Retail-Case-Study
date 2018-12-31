@@ -1,5 +1,5 @@
 # Run script with the command:
-# spark-submit --packages mysql:mysql-connector-java:5.1.39,org.apache.spark:spark-avro_2.11:2.4.0 part2.py
+# spark-submit --packages org.apache.spark:spark-avro_2.11:2.4.0 part2.py
 
 from pyspark import SparkContext
 from pyspark.sql import SparkSession, SQLContext
