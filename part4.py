@@ -72,7 +72,7 @@ def write_last_update_to_s3():
     client.put_object(Bucket=bucket_name, Key="config_files/sf-last_update", Body="")
 
 
-def load_sf_creds:
+def load_sf_creds():
     f = open(creds, 'r')
     user = f.readline().rstrip()
     password = f.readline().rstrip()
