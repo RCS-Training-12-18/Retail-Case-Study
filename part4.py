@@ -11,12 +11,13 @@ import tempfile
 from pyspark.sql.types import DoubleType
 import pyspark.sql.functions as sf
 from dateutil import tz
+from dateutil.tz import *
 
 bucket_name = "rcs-training-12-18"
 sc = SparkContext("local[2]", "Case-Study-Part-3")
 sqlContext = SQLContext(sc)
 spark = SparkSession.builder.appName("Case-Study-Part-3").getOrCreate()
-
+dt_format = "%Y%m%d_%H%M%S %Z"
 
 # Just to show the each section of the program in the middle of all the output
 def section_header(h):
@@ -33,14 +34,9 @@ def last_snowflake_push():
     for obj in bucket.objects.all():
         key = obj.key
         key_parts = key.split("/")
-        if key_parts[0] == "config_files" and key_parts[1] == "last_sf_update":
-            f = tempfile.NamedTemporaryFile(delete=False)
-            f.write(obj.get()['Body'].read())
-            f.close()
-            file = open(f.name, 'r')
-            last_t = file.readline()
-            file.close()
-            return last_t
+        if key_parts[0] == "config_files" and key_parts[1] == "sf-last_update":
+            return obj.get()['LastModified']
+    # Default if time doesn't exist
     return datetime.datetime.strptime("Dec 25, 2018 00:00:00", "%b %d, %Y %H:%M:%S").replace(tzinfo=tz.tzutc())
 
 
@@ -63,10 +59,21 @@ def since_last_update_s3():
     return folders
 
 
+# Writes the dataframe to S3 using boto3
+# Saves the data as a csv
+def write_last_update_to_s3():
+    section_header("Writing last update to S3")
+    client = boto3.client('s3')
+    s3_resource = boto3.resource('s3')
+    s3_resource.Object(bucket_name, 'config_files/sf-last_update').delete()
+    client.put_object(Bucket=bucket_name, Key="config_files/sf-last_update", Body="")
+
+
+
 def main(arg):
     for v in since_last_update_s3():
-        print v
-
+         print v
+    write_last_update_to_s3()
 
 # Runs the script
 if __name__ == "__main__":
