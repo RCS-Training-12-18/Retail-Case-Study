@@ -12,12 +12,15 @@ from pyspark.sql.types import DoubleType
 import pyspark.sql.functions as sf
 from dateutil import tz
 from dateutil.tz import *
+from boto3 import Session
+import snowflake.connector
 
 bucket_name = "rcs-training-12-18"
 sc = SparkContext("local[2]", "Case-Study-Part-3")
 sqlContext = SQLContext(sc)
 spark = SparkSession.builder.appName("Case-Study-Part-3").getOrCreate()
 dt_format = "%Y%m%d_%H%M%S %Z"
+creds = "/home/msr/snowflake_creds"
 
 # Just to show the each section of the program in the middle of all the output
 def section_header(h):
@@ -69,11 +72,47 @@ def write_last_update_to_s3():
     client.put_object(Bucket=bucket_name, Key="config_files/sf-last_update", Body="")
 
 
+def load_sf_creds:
+    f = open(creds, 'r')
+    user = f.readline().rstrip()
+    password = f.readline().rstrip()
+    account = f.readline().rstrip()
+    f.close()
+    return user, password, account
+
+
+def load_csv_in_snowflake(folders):
+    if len(folders) == 0:
+        section_header("No data to move to Snowflake")
+        return
+    section_header("Moving Data to Snowflake")
+    session = Session()
+    credentials = session.get_credentials()
+    current_credentials = credentials.get_frozen_credentials()
+    u,p,a = load_sf_creds()
+    con = snowflake.connector.connect(
+        user=u,
+        password=p,
+        account=a,
+    )
+    con.cursor().execute("USE RCS")
+    for f in folders:
+        con.cursor().execute("""
+        COPY INTO sales FROM s3://""" + bucket_name + "/" + f +"""
+            CREDENTIALS = (
+                aws_key_id='{aws_access_key_id}',
+                aws_secret_key='{aws_secret_access_key}')
+            FILE_FORMAT=(field_delimiter=',')
+        """.format(
+            aws_access_key_id=current_credentials.access_key,
+            aws_secret_access_key=current_credentials.secret_key))
+
 
 def main(arg):
-    for v in since_last_update_s3():
-         print v
+    folders = since_last_update_s3()
     write_last_update_to_s3()
+    load_csv_in_snowflake(folders)
+
 
 # Runs the script
 if __name__ == "__main__":
