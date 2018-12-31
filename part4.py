@@ -41,7 +41,7 @@ def last_snowflake_push():
             last_t = file.readline()
             file.close()
             return last_t
-    return datetime.datetime.strptime("Dec 31, 2018 01:49:30", "%b %d, %Y %H:%M:%S").replace(tzinfo=tz.tzutc())
+    return datetime.datetime.strptime("Dec 25, 2018 00:00:00", "%b %d, %Y %H:%M:%S").replace(tzinfo=tz.tzutc())
 
 
 # Finds all folders that are newer that the most recent push to S3
@@ -66,7 +66,7 @@ def since_last_update_s3():
 def main(arg):
     for v in since_last_update_s3():
         print v
-        
+
 
 # Runs the script
 if __name__ == "__main__":
