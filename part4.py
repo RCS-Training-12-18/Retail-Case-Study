@@ -1,24 +1,16 @@
 # Run script with the command:
 # spark-submit --packages mysql:mysql-connector-java:5.1.39,org.apache.spark:spark-avro_2.11:2.4.0 part4.py
 
-from pyspark import SparkContext
-from pyspark.sql import SparkSession, SQLContext
+
 import datetime
-import sys
 import boto3
-import os
-import tempfile
-from pyspark.sql.types import DoubleType
-import pyspark.sql.functions as sf
+import sys
 from dateutil import tz
 from dateutil.tz import *
 from boto3 import Session
 import snowflake.connector
 
 bucket_name = "rcs-training-12-18"
-sc = SparkContext("local[2]", "Case-Study-Part-3")
-sqlContext = SQLContext(sc)
-spark = SparkSession.builder.appName("Case-Study-Part-3").getOrCreate()
 dt_format = "%Y%m%d_%H%M%S %Z"
 creds = "/home/msr/snowflake_creds"
 
@@ -102,7 +94,7 @@ def load_csv_in_snowflake(folders):
             CREDENTIALS = (
                 aws_key_id='{aws_access_key_id}',
                 aws_secret_key='{aws_secret_access_key}')
-            FILE_FORMAT=(field_delimiter=',' force=true)
+            FILE_FORMAT=(field_delimiter=',') force=true
         """.format(
             aws_access_key_id=current_credentials.access_key,
             aws_secret_access_key=current_credentials.secret_key))
