@@ -1,3 +1,5 @@
+# This is written for Python 2.7
+
 # Run script with the command:
 # spark-submit --packages org.apache.spark:spark-avro_2.11:2.4.0 part2.py
 

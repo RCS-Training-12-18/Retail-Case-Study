@@ -1,3 +1,5 @@
+# This is written for Python 2.7
+
 # Run script with the command:
 # spark-submit part3.py
 

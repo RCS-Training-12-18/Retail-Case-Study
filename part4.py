@@ -1,5 +1,7 @@
+# This is written for Python 2.7
+
 # Run script with the command:
-# spark-submit --packages mysql:mysql-connector-java:5.1.39,org.apache.spark:spark-avro_2.11:2.4.0 part4.py
+# python part4.py
 
 
 import datetime

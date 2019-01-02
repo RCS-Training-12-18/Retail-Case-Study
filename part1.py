@@ -1,3 +1,5 @@
+# This is written for Python 2.7
+
 # Run script with full load:
 # spark-submit --packages mysql:mysql-connector-java:5.1.39,org.apache.spark:spark-avro_2.11:2.4.0 part1.py F
 
