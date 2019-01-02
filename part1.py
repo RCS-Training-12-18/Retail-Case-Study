@@ -15,9 +15,8 @@ import tempfile
 
 creds = "/home/msr/mysql_creds"
 #File to save last update time, will move this to S3 later
-last_update = "/home/msr/last_update-p1"
+last_update = "mysql_last_update"
 bucket_name = "rcs-training-12-18"
-
 sc = SparkContext("local[2]", "Case-Study-Part-1")
 
 
@@ -47,6 +46,27 @@ def table_names():
     return t_names
 
 
+def get_last_update_time():
+    section_header("Get table names from S3")
+    s3 = boto3.resource('s3')
+    bucket = s3.Bucket(bucket_name)
+    for obj in bucket.objects.all():
+        key = obj.key
+        key_parts = key.split("/")
+        if key_parts[0] == "config_files" and key_parts[1] == last_update:
+            return int(obj.get()['Body'].read().rstrip())
+    print "Failed to load file:" + last_update
+    exit(1)
+
+
+def update_last_update_time(t):
+    s3_resource = boto3.resource('s3')
+    client = boto3.client('s3')
+    s3_resource.Object(bucket_name, 'config_files/' + last_update).delete()
+    client.put_object(Bucket=bucket_name, Key="config_files/" + last_update, Body=str(t).encode())
+    return
+
+
 def mysql_creds():
     f = open(creds, 'r')
     user = f.readline().rstrip()
@@ -54,6 +74,7 @@ def mysql_creds():
     url = f.readline().rstrip()
     f.close()
     return user, password, url
+
 
 # Loads a dataframe and returns it
 # If the load is incremental, removes old data
@@ -97,15 +118,9 @@ def main(arg):
         print "Bad argument. Use 'I' or 'F'"
         exit(1)
     # Try to read the unix timestamp from the file listed in the variable "last_update"
-    try:
-        f = open(last_update, 'r')
-        last_update_unix_ts = f.read().rstrip()
-        f.close()
-    except:
-        if arg[0] == 'I':
-            print "Failed to load file:" + last_update
-            exit(1)
-        # Set last update time to 0 if full load and file doesn't exist
+    if arg[0] == 'I':
+        last_update_unix_ts = get_last_update_time()
+    else:
         last_update_unix_ts = 0
     # Used when updating the "last_update" file
     new_update_time = int(time.time())
@@ -114,12 +129,9 @@ def main(arg):
     # Load the dataframes into a list
     section_header("Load Dataframes")
     for n in t_names:
-        dfs.append(load_df(n,arg[0],last_update_unix_ts))
-    write_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        dfs.append(load_df(n, arg[0], last_update_unix_ts))
     # Update the "last_update" file with the newest runtime.
-    f = open(last_update, 'w+')
-    f.write(str(new_update_time))
-    f.close()
+    update_last_update_time(new_update_time)
     # Saves the dataframes as avro files in S3
     write_avro2s3(dfs, t_names, arg[0])
 
