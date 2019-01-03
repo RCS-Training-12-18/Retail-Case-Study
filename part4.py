@@ -16,6 +16,8 @@ bucket_name = "rcs-training-12-18"
 dt_format = "%Y%m%d_%H%M%S %Z"
 creds = "/home/msr/snowflake_creds"
 last_update = "sf_last_update"
+
+
 # Just to show the each section of the program in the middle of all the output
 def section_header(h):
     print "\n\n\n"
@@ -83,7 +85,7 @@ def load_csv_in_snowflake(folders):
     session = Session()
     credentials = session.get_credentials()
     current_credentials = credentials.get_frozen_credentials()
-    u,p,a = load_sf_creds()
+    u, p, a = load_sf_creds()
     con = snowflake.connector.connect(
         user=u,
         password=p,
@@ -92,7 +94,7 @@ def load_csv_in_snowflake(folders):
     con.cursor().execute("USE RCS")
     for f in folders:
         con.cursor().execute("""
-        COPY INTO sales FROM s3://""" + bucket_name + "/" + f +"""
+        COPY INTO sales FROM s3://""" + bucket_name + "/" + f + """
             CREDENTIALS = (
                 aws_key_id='{aws_access_key_id}',
                 aws_secret_key='{aws_secret_access_key}')
@@ -102,7 +104,7 @@ def load_csv_in_snowflake(folders):
             aws_secret_access_key=current_credentials.secret_key))
 
 
-def main(arg):
+def main():
     folders = since_last_update_s3()
     write_last_update_to_s3()
     load_csv_in_snowflake(folders)
@@ -111,4 +113,4 @@ def main(arg):
 # Runs the script
 if __name__ == "__main__":
     section_header("Program Start")
-    main(sys.argv[1:])
+    main()
