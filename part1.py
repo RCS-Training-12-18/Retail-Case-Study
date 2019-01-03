@@ -16,7 +16,7 @@ import os
 import tempfile
 
 creds = "/home/msr/mysql_creds"
-#File to save last update time, will move this to S3 later
+# File to save last update time, will move this to S3 later
 last_update = "mysql_last_update"
 bucket_name = "rcs-training-12-18"
 sc = SparkContext("local[2]", "Case-Study-Part-1")
@@ -80,10 +80,10 @@ def mysql_creds():
 
 # Loads a dataframe and returns it
 # If the load is incremental, removes old data
-def load_df(table_name, incremental,ts):
-    sqlContext = SQLContext(sc)
+def load_df(table_name, incremental, ts):
+    sqlcontext = SQLContext(sc)
     u, pw, url = mysql_creds()
-    df = sqlContext.read.format("jdbc").option("url", url).option("driver", "com.mysql.jdbc.Driver").option(
+    df = sqlcontext.read.format("jdbc").option("url", url).option("driver", "com.mysql.jdbc.Driver").option(
           "dbtable", table_name).option("user", u).option("password", pw).load()
     if incremental == 'I':
         return df.filter(df.last_update > ts)

@@ -117,7 +117,7 @@ def sales_promotion_join(dfs, t_order):
     return new_dfs, table_order
 
 
-def main(arg):
+def main():
     dfs, table_order = read_avro_from_s3()
     dfs = remove_non_prom_sales(dfs, table_order)
     dfs, table_order = sales_union(dfs, table_order)
@@ -128,4 +128,4 @@ def main(arg):
 # Runs the script
 if __name__ == "__main__":
     section_header("Program Start")
-    main(sys.argv[1:])
+    main()

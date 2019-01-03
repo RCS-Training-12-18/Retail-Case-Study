@@ -117,11 +117,11 @@ def join_weekend_weekday(dfs):
     df = dfs[0].union(dfs[1])
     # Group the matching values for weekday and weekend into the same row
     df = df.groupby("region_id", "promotion_id", "the_year", "the_month", "cost").agg(sf.sum("wkday").alias("wkday"),
-                    sf.sum("wkend").alias("wkend"))
+                                                                                      sf.sum("wkend").alias("wkend"))
     return df
 
 
-def main(arg):
+def main():
     dfs, table_order = read_parquet_from_s3()
     df = join_ini_dataframes(dfs, table_order)
     dfs = split_into_weekend_weekday(df)
@@ -133,4 +133,4 @@ def main(arg):
 # Runs the script
 if __name__ == "__main__":
     section_header("Program Start")
-    main(sys.argv[1:])
+    main()
