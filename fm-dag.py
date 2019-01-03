@@ -23,51 +23,51 @@ args = {
 dag = DAG(
     dag_id='foodmart',
     default_args=args,
-    catchup = False,
+    catchup=False,
     schedule_interval='*/45 * * * *',
     dagrun_timeout=timedelta(minutes=10),
 )
 
 start = DummyOperator(
-	task_id='start',
-	dag=dag
+    task_id='start',
+    dag=dag
 )
 
 p1f = BashOperator(
-	task_id='import_from_mysql_to_s3_full_load',
-	bash_command=ss + " " + p1pkg + " "+ py_file_loc + "part1.py F",
-	trigger_rule=TriggerRule.ONE_FAILED,
-	dag=dag
+    task_id='import_from_mysql_to_s3_full_load',
+    bash_command=ss + " " + p1pkg + " " + py_file_loc + "part1.py F",
+    trigger_rule=TriggerRule.ONE_FAILED,
+    dag=dag
 )
 
 p1i = BashOperator(
-        task_id='import_from_mysql_to_s3_full_incremental',
-        bash_command=ss + " " + p1pkg + " "+ py_file_loc + "part1.py I",
-        dag=dag
+    task_id='import_from_mysql_to_s3_full_incremental',
+    bash_command=ss + " " + p1pkg + " " + py_file_loc + "part1.py I",
+    dag=dag
 )
 
 p2 = BashOperator(
-        task_id='data_cleansing',
-        bash_command=ss + " " + p2pkg + " "+ py_file_loc + "part2.py",
-	trigger_rule=TriggerRule.ONE_SUCCESS,
-        dag=dag
+    task_id='data_cleansing',
+    bash_command=ss + " " + p2pkg + " " + py_file_loc + "part2.py",
+    trigger_rule=TriggerRule.ONE_SUCCESS,
+    dag=dag
 )
 
 p3 = BashOperator(
-        task_id='aggregation_and_move_to_staging',
-        bash_command=ss + " " + py_file_loc + "part3.py",
-        dag=dag
+    task_id='aggregation_and_move_to_staging',
+    bash_command=ss + " " + py_file_loc + "part3.py",
+    dag=dag
 )
 
 p4 = BashOperator(
-        task_id='move_data_from_s3_to_snowflake',
-        bash_command=ss + " " + py_file_loc + "part4.py",
-        dag=dag
+    task_id='move_data_from_s3_to_snowflake',
+    bash_command="python " + py_file_loc + "part4.py",
+    dag=dag
 )
 
 end = DummyOperator(
-        task_id='end',
-        dag=dag
+    task_id='end',
+    dag=dag
 )
 
 start >> p1i
