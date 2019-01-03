@@ -15,7 +15,7 @@ import snowflake.connector
 bucket_name = "rcs-training-12-18"
 dt_format = "%Y%m%d_%H%M%S %Z"
 creds = "/home/msr/snowflake_creds"
-
+last_update = "sf_last_update"
 # Just to show the each section of the program in the middle of all the output
 def section_header(h):
     print "\n\n\n"
@@ -31,7 +31,7 @@ def last_snowflake_push():
     for obj in bucket.objects.all():
         key = obj.key
         key_parts = key.split("/")
-        if key_parts[0] == "config_files" and key_parts[1] == "sf-last_update":
+        if key_parts[0] == "config_files" and key_parts[1] == last_update:
             return obj.get()['LastModified']
     # Default if time doesn't exist
     return datetime.datetime.strptime("Dec 25, 2018 00:00:00", "%b %d, %Y %H:%M:%S").replace(tzinfo=tz.tzutc())
@@ -62,8 +62,8 @@ def write_last_update_to_s3():
     section_header("Writing last update to S3")
     client = boto3.client('s3')
     s3_resource = boto3.resource('s3')
-    s3_resource.Object(bucket_name, 'config_files/sf-last_update').delete()
-    client.put_object(Bucket=bucket_name, Key="config_files/sf-last_update", Body="")
+    s3_resource.Object(bucket_name, 'config_files/'+last_update).delete()
+    client.put_object(Bucket=bucket_name, Key="config_files/"+last_update, Body="")
 
 
 def load_sf_creds():
