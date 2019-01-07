@@ -6,7 +6,7 @@ from airflow.utils.trigger_rule import TriggerRule
 from airflow.models import DAG
 from airflow.operators.bash_operator import BashOperator
 from airflow.operators.dummy_operator import DummyOperator
-from airflow.models import Variable
+from airflow.operators.python_operator import ShortCircuitOperator
 
 ss = '/home/msr/spark-2.4.0-bin-hadoop2.7/bin/spark-submit'
 mysql_pkg = 'mysql:mysql-connector-java:5.1.39'
@@ -24,7 +24,7 @@ dag = DAG(
     dag_id='foodmart',
     default_args=args,
     catchup=False,
-    schedule_interval='*/45 * * * *',
+    schedule_interval='*/10 * * * *',
     dagrun_timeout=timedelta(minutes=10),
 )
 
@@ -43,6 +43,20 @@ p1f = BashOperator(
 p1i = BashOperator(
     task_id='import_from_mysql_to_s3_full_incremental',
     bash_command=ss + " " + p1pkg + " " + py_file_loc + "part1.py I",
+    dag=dag
+)
+def new_rows():
+    s3 = boto3.resource('s3')
+    try:
+        s3.Object('rcs-training-12-18','config_files/skip').load()
+        return false
+    except:
+        return true
+
+no_new = ShortCircuitOperator(
+    task_id="new_rows",
+    python_callable=new_rows,
+    trigger_rule=TriggerRule.ONE_SUCCESS,
     dag=dag
 )
 
@@ -73,7 +87,8 @@ end = DummyOperator(
 start >> p1i
 p1i >> p1f
 p1f >> p2
-p1i >> p2
+p1i >> no_new
+no_new >> p2
 p2 >> p3
 p3 >> p4
 p4 >> end

@@ -20,6 +20,7 @@ creds = "/home/msr/mysql_creds"
 last_update = "mysql_last_update"
 bucket_name = "rcs-training-12-18"
 sc = SparkContext("local[2]", "Case-Study-Part-1")
+skip_key = "config_files/skip"
 
 
 # Just to show the each section of the program in the middle of all the output
@@ -96,9 +97,15 @@ def load_df(table_name, incremental, ts):
 def write_avro2s3(dfs, table_order, incremental):
     section_header("Writing Avro to S3")
     client = boto3.client('s3')
+    s3 = boto3.resource('s3')
+    s3.Object(bucket_name, skip_key).delete()
     write_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    skipped = 0
     for i in range(len(dfs)):
         df = dfs[i]
+        if df.count() == 0:
+            skipped += 1
+            continue
         dir_name = table_order[i]
         path = os.path.join(tempfile.mkdtemp(), dir_name)
         df.repartition(1).write.format("avro").save(path)
@@ -109,6 +116,9 @@ def write_avro2s3(dfs, table_order, incremental):
                 client.put_object(Bucket=bucket_name, Key="raw/" + dir_name + "/" + write_time + str(incremental) + "/"
                                                           + "%05d.arvo" % (parts,), Body=open(out, 'r'))
                 parts += 1
+    if skipped == len(dfs) and incremental == 'I':
+        client.put_object(Bucket=bucket_name, Key=skip_key, Body="")
+
 
 
 def main(arg):
