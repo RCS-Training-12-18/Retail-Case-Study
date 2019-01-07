@@ -94,7 +94,7 @@ def load_df(table_name, incremental, ts):
 # Writes the dataframe to S3 using boto3
 # Saves the data as an avro
 def write_avro2s3(dfs, table_order, incremental):
-    section_header("Writing Parquet to S3")
+    section_header("Writing Avro to S3")
     client = boto3.client('s3')
     write_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     for i in range(len(dfs)):
