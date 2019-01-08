@@ -37,7 +37,7 @@ def read_parquet_from_s3():
     for obj in bucket.objects.all():
         key = obj.key
         key_parts = key.split("/")
-        if key_parts[0] == "cleansed":
+        if key_parts[0] == "curated":
             f = tempfile.NamedTemporaryFile(delete=False)
             f.write(obj.get()['Body'].read())
             f.close()
