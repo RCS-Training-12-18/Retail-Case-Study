@@ -103,7 +103,7 @@ def write_avro2s3(dfs, table_order, incremental):
     skipped = 0
     for i in range(len(dfs)):
         df = dfs[i]
-        if df.count() == 0:
+        if df.count() == 0 and incremental == 'I':
             skipped += 1
             continue
         dir_name = table_order[i]
@@ -118,7 +118,6 @@ def write_avro2s3(dfs, table_order, incremental):
                 parts += 1
     if skipped == len(dfs) and incremental == 'I':
         client.put_object(Bucket=bucket_name, Key=skip_key, Body="")
-
 
 
 def main(arg):
