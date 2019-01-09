@@ -92,6 +92,7 @@ def load_csv_in_snowflake(folders):
         account=a,
     )
     con.cursor().execute("USE RCS")
+    con.cursor().execute("TRUNCATE TABLE SALES")
     for f in folders:
         con.cursor().execute("""
         COPY INTO sales FROM s3://""" + bucket_name + "/" + f + """
