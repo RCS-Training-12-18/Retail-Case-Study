@@ -98,7 +98,7 @@ def load_csv_in_snowflake(folders):
             CREDENTIALS = (
                 aws_key_id='{aws_access_key_id}',
                 aws_secret_key='{aws_secret_access_key}')
-            FILE_FORMAT=(field_delimiter=',') force=true
+            FILE_FORMAT=(field_delimiter=',')
         """.format(
             aws_access_key_id=current_credentials.access_key,
             aws_secret_access_key=current_credentials.secret_key))
