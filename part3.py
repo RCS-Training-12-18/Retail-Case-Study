@@ -64,7 +64,7 @@ def write_csv2s3(df):
     for f in os.listdir(path):
         if f.startswith('part'):
             out = path + "/" + f
-            client.put_object(Bucket=bucket_name, Key="staging/" + dir_name + "/" + write_time + "/" +
+            client.put_object(Bucket=bucket_name, Key="staging/" + dir_name + "/" +
                                                       "%05d.csv" % (parts,), Body=open(out, 'r'))
             parts += 1
 

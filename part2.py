@@ -72,10 +72,11 @@ def write_parquet2s3(dfs, table_order):
         path = os.path.join(tempfile.mkdtemp(), dir_name)
         df.repartition(1).write.format("parquet").save(path)
         parts = 0
+
         for f in os.listdir(path):
             if f.startswith('part'):
                 out = path + "/" + f
-                client.put_object(Bucket=bucket_name, Key="curated/" + dir_name + "/" + write_time + "/" +
+                client.put_object(Bucket=bucket_name, Key="curated/" + dir_name + "/" +
                                                           "%05d.parquet" % (parts,), Body=open(out, 'r'))
                 parts += 1
 
