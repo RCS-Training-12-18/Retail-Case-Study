@@ -1,6 +1,6 @@
 from builtins import range
 from datetime import timedelta
-
+import boto3
 import airflow
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.models import DAG
@@ -24,7 +24,7 @@ dag = DAG(
     dag_id='foodmart',
     default_args=args,
     catchup=False,
-    schedule_interval='*/10 * * * *',
+    schedule_interval='*/30 * * * *',
     dagrun_timeout=timedelta(minutes=10),
 )
 
@@ -45,13 +45,13 @@ p1i = BashOperator(
     bash_command=ss + " " + p1pkg + " " + py_file_loc + "part1.py I",
     dag=dag
 )
-def new_rows():
+def new_rows(): 
     s3 = boto3.resource('s3')
-    try:
-        s3.Object('rcs-training-12-18','config_files/skip').load()
-        return false
-    except:
-        return true
+    bucket = s3.Bucket('rcs-training-12-18')
+    for o in bucket.objects.all():
+        if o.key == 'config_files/skip':
+            return False
+    return True
 
 no_new = ShortCircuitOperator(
     task_id="new_rows",
@@ -61,7 +61,7 @@ no_new = ShortCircuitOperator(
 )
 
 p2 = BashOperator(
-    task_id='data_cleansing',
+    task_id='data_curation',
     bash_command=ss + " " + p2pkg + " " + py_file_loc + "part2.py",
     trigger_rule=TriggerRule.ONE_SUCCESS,
     dag=dag
