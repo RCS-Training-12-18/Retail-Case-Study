@@ -7,4 +7,4 @@ Running the startup.bash will set up the tables with the new **last_update** col
 ## The Dag
 Move the dag into an appropriate folder as defined by your airflow.cfg. 
 ## Tables
-The tables file is meant to be in a folder called **config_files** in the S3 bucket. If tables are added to the list, the **last_update** column needs to be added.
+The tables file is meant to be in a folder called **config_files** in the S3 bucket. If tables are added to the list also add them to the startup script and rerun it to addthe **last_update** column.
