@@ -26,6 +26,10 @@ def section_header(h):
     print "\n\n\n"
 
 
+
+
+
+
 # Reads the dataframes from S3 using boto3
 # Files are stored in avro format
 def read_avro_from_s3():
