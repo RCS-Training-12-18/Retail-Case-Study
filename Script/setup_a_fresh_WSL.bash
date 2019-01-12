@@ -34,11 +34,16 @@ pip install boto3
 sudo apt-get install -y libssl-dev libffi-dev
 sudo ~/.local/bin/pip install --upgrade snowflake-connector-python
 clear
+echo -n "Did MySQL install prompt you for a root password?[Y/n]"
+read yn
+if [["$yn" == "N" || "$yn" == "n"]]; then
+clear
 read -s -p 'Enter the password you want for your MySQL root user' pw
 echo ''
 sudo mysql <<EOF
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password by '$pw';
 flush privileges;
 EOF
-#clear 
+fi
+clear 
 echo 'Installation Complete'
