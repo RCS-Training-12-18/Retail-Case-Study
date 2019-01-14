@@ -5,10 +5,10 @@ sudo apt-get install -y default-jdk
 sudo apt install -y python2.7
 sudo apt install -y python-pip
 pip install --upgrade pip
-cp .bashrc .oldbashrc
+cp ~/.bashrc ~/.oldbashrc
 echo 'export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
-export PATH=$PATH:$JAVA_HOME/bin' >> .bashrc
-. .bashrc
+export PATH=$PATH:$JAVA_HOME/bin' >> ~/.bashrc
+. ~/.bashrc
 #MySQL
 sudo apt-get install -y mysql-server
 sudo service mysql start
@@ -25,10 +25,10 @@ sudo apt-get install -y libsasl2-dev
 sudo AIRFLOW_GPL_UNIDECODE=yes ~/.local/bin/pip install apache-airflow[all]
 #update airflow config
 airflow initdb
-cp airflow/airflow.cfg airflow/oldairflow.cfg
-sed -i 's?sql_alchemy_conn = sqlite:////home/'$USER'/airflow/airflow.db?sql_alchemy_conn = postgresql+psycopg2://airflow:airflow@localhost:5432/airflow?' airflow/airflow.cfg
-sed -i 's/executor = SequentialExecutor/executor = LocalExecutor/' airflow/airflow.cfg
-rm airflow/airflow.db
+cp ~/airflow/airflow.cfg ~/airflow/oldairflow.cfg
+sed -i 's?sql_alchemy_conn = sqlite:////home/'$USER'/airflow/airflow.db?sql_alchemy_conn = postgresql+psycopg2://airflow:airflow@localhost:5432/airflow?' ~/airflow/airflow.cfg
+sed -i 's/executor = SequentialExecutor/executor = LocalExecutor/' ~/airflow/airflow.cfg
+rm ~/airflow/airflow.db
 airflow initdb
 pip install boto3
 sudo apt-get install -y libssl-dev libffi-dev
