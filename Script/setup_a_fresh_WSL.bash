@@ -46,4 +46,37 @@ flush privileges;
 EOF
 fi
 clear 
-echo 'Installation Complete'
+echo 'Do you want to install the retail case study?[Y/n]'
+read yn2
+if [[ "$yn2" == "Y" || "$yn2" == "y" ]]; then
+#Downloads the Repo and moves files where they need to be
+wget -P ~ https://github.com/RCS-Training-12-18/Retail-Case-Study/tarball/master
+tar -xzvf ~/master
+rm ~/master
+mv ~/RCS-* ~/Retail-Case-Study
+mkdir ~/airflow/dags
+cp ~/Retail-Case-Study/dags/fm-dag.py ~/airflow/dags
+#Replaces some lines in the dag
+sed -i 's?msr?'$USER'?' ~/airflow/dags/fm-dag.py
+sed -i "/py_file_loc =/c\py_file_loc = '/home/$USER/Retail-Case-Study'" ~/airflow/dags/fm-dag.py
+rm -r ~/Retail-Case-Study/dags
+rm -r ~/Retail-Case-Study/Script
+#Creates the user that part1.py uses
+read -s -p 'Enter your MySQL root password' mysqlpw
+sudo mysql -u root -p$mysqlpw <<EOS
+create user 'user'@'localhost' identified by 'password';
+create database foodmart;
+grant all privileges on foodmart.* to 'user'@'localhost';
+flush privileges;
+EOS
+#Downloads the foodmart sql data and moves it into the database
+wget -P ~ 'http://pentaho.dlpage.phi-integration.com/mondrian/mysql-foodmart-database/foodmart_mysql.tar.gz?attredirects=0&d=1'
+tar -xzvf ~/foodmart*
+rm ~/foodmart_mysql.t*
+mysql -u user -ppassword foodmart < ~/foodmart_my*
+#cleanup
+rm ~/foodmart*
+bash ~/Retail-Case-Study/startup.bash
+rm ~/Retail-Case-Study/startup.bash
+rm ~/Retail-Case-Study/README.md
+fi
