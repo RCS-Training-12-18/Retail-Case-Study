@@ -36,7 +36,7 @@ sudo ~/.local/bin/pip install --upgrade snowflake-connector-python
 clear
 echo -n "Did MySQL install prompt you for a root password?[Y/n]"
 read yn
-if [["$yn" == "N" || "$yn" == "n"]]; then
+if [[ "$yn" == "N" || "$yn" == "n" ]]; then
 clear
 read -s -p 'Enter the password you want for your MySQL root user' pw
 echo ''
