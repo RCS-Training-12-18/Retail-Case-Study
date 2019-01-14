@@ -22,7 +22,7 @@ sudo apt-get install -y libmysqlclient-dev
 sudo apt-get install -y libssl-dev
 sudo apt-get install -y libkrb5-dev
 sudo apt-get install -y libsasl2-dev
-sudo AIRFLOW_GPL_UNIDECODE=yes ~/.local/bin/pip install apache-airflow
+sudo AIRFLOW_GPL_UNIDECODE=yes ~/.local/bin/pip install apache-airflow[all]
 #update airflow config
 airflow initdb
 cp airflow/airflow.cfg airflow/oldairflow.cfg
