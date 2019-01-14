@@ -6,7 +6,7 @@ sudo apt install -y python2.7
 sudo apt install -y python-pip
 pip install --upgrade pip
 cp ~/.bashrc ~/.oldbashrc
-echo 'export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+echo 'export JAVA_HOME=/usr/lib/jvm/default-java
 export PATH=$PATH:$JAVA_HOME/bin' >> ~/.bashrc
 . ~/.bashrc
 #MySQL
