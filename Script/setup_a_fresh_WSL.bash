@@ -136,5 +136,6 @@ sed -i '/bucket_name = /c\bucket_name = "'$bucket'"' Retail-Case-Study/part1.py
 sed -i '/bucket_name = /c\bucket_name = "'$bucket'"' Retail-Case-Study/part2.py
 sed -i '/bucket_name = /c\bucket_name = "'$bucket'"' Retail-Case-Study/part3.py
 sed -i '/bucket_name = /c\bucket_name = "'$bucket'"' Retail-Case-Study/part4.py
+python ~/Retail-Case-Study/Script/move_tables_to_bucket.py $bucket
 fi
 fi
