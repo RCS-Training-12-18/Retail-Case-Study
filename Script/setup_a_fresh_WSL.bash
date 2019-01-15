@@ -80,3 +80,61 @@ bash ~/Retail-Case-Study/startup.bash
 rm ~/Retail-Case-Study/startup.bash
 rm ~/Retail-Case-Study/README.md
 fi
+clear
+#Setup Boto3
+echo "Create Boto3 credential files?[Y/n]"
+read yn
+if [[ "$yn" == "Y" || "$yn" == "y" ]] ; then
+mkdir ~/.aws
+echo "AWS Username: "
+read uname
+echo "AWS Secret Key: "
+read key
+echo "Region: "
+read region
+clear
+echo "[default]" >> ~/.aws/credentials
+echo "aws_access_key_id = "$uname >> ~/.aws/credentials
+echo "aws_secret_access_key = "$key >> ~/.aws/credentials
+echo "[default]" >> ~/.aws/config
+echo "region="$region >> ~/.aws/config
+#Cycle while boto3 credentials are invalid
+python ~/Retail-Case-Study/Script/boto3test.py
+RET=$?
+while [[ $RET != 0 ]]; do
+clear
+if [[ $RET == 7 ]] ; then
+  echo 'Invalid Access Key. Please re-enter your access key.'
+  read uname
+  sed -i "/aws_access/c\aws_access_key_id = "$uname"" ~/.aws/credentials
+fi
+if [[ $RET == 13 ]] ; then
+  echo 'Invalid Secret Key. Please re-enter your secret key.'
+  read key
+  sed -i "/aws_sec/c\aws_secret_access_key = "$key"" ~/.aws/credentials
+fi
+python ~/Retail-Case-Study/Script/boto3test.py
+RET=$?
+done
+clear
+#Set up S3 Bucket
+echo "Create an S3 Bucket?[Y/n]"
+read yn
+if [[ "$yn" == "Y" || "$yn" == "y" ]] ; then
+echo "Enter a bucket name. Bucket names must be unique."
+read bucket
+python ~/Retail-Case-Study/Script/createbucket.py bucket
+RET=$?
+#Loop while bucket name already exists
+if [[ $RET == 3 ]]; then
+  echo "Invalid bucket name. Please enter a new bucket name."
+  read bucket
+  python ~/Retail-Case-Study/Script/createbucket.py $bucket
+  RET=$?
+fi
+sed -i '/bucket_name = /c\bucket_name = "'$bucket'"' Retail-Case-Study/part1.py
+sed -i '/bucket_name = /c\bucket_name = "'$bucket'"' Retail-Case-Study/part2.py
+sed -i '/bucket_name = /c\bucket_name = "'$bucket'"' Retail-Case-Study/part3.py
+sed -i '/bucket_name = /c\bucket_name = "'$bucket'"' Retail-Case-Study/part4.py
+fi
+fi
