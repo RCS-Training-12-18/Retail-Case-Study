@@ -6,7 +6,6 @@
 from pyspark import SparkContext
 from pyspark.sql import SparkSession, SQLContext
 import datetime
-import sys
 import boto3
 import os
 import tempfile

@@ -6,9 +6,7 @@
 
 import datetime
 import boto3
-import sys
 from dateutil import tz
-from dateutil.tz import *
 from boto3 import Session
 import snowflake.connector
 
