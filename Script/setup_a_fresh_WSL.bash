@@ -60,7 +60,6 @@ cp ~/Retail-Case-Study/dags/fm-dag.py ~/airflow/dags
 sed -i 's?msr?'$USER'?' ~/airflow/dags/fm-dag.py
 sed -i "/py_file_loc =/c\py_file_loc = '/home/$USER/Retail-Case-Study'" ~/airflow/dags/fm-dag.py
 rm -r ~/Retail-Case-Study/dags
-rm -r ~/Retail-Case-Study/Script
 #Creates the user that part1.py uses
 read -s -p 'Enter your MySQL root password' mysqlpw
 sudo mysql -u root -p$mysqlpw <<EOS
